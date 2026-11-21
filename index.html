@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我在华为的第几天 · 工作天数计算器</title>
+<style>
+  :root {
+    --hw-red: #C7000B;
+    --hw-red-soft: rgba(199, 0, 11, 0.08);
+    --ink: #16181d;
+    --ink-soft: #5b6070;
+    --line: #e8e9ee;
+    --bg: #f6f6f8;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background:
+      radial-gradient(1100px 520px at 12% -12%, rgba(199, 0, 11, 0.10), transparent 60%),
+      radial-gradient(900px 460px at 100% 108%, rgba(22, 24, 29, 0.07), transparent 62%),
+      var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 720px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 44px 44px 36px;
+    box-shadow:
+      0 1px 2px rgba(22, 24, 29, 0.04),
+      0 24px 60px -24px rgba(22, 24, 29, 0.18);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    font-weight: 600;
+    color: var(--hw-red);
+    background: var(--hw-red-soft);
+    border-radius: 999px;
+    padding: 7px 14px 7px 11px;
+  }
+
+  .badge::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--hw-red);
+  }
+
+  h1 {
+    margin: 22px 0 8px;
+    font-size: 32px;
+    line-height: 1.24;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+
+  h1 .accent { color: var(--hw-red); }
+
+  .sub {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+
+  .form {
+    margin-top: 30px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .field {
+    flex: 1 1 240px;
+    min-width: 200px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    margin-bottom: 9px;
+  }
+
+  input[type="date"] {
+    width: 100%;
+    height: 54px;
+    padding: 0 16px;
+    font-size: 17px;
+    font-family: inherit;
+    color: var(--ink);
+    background: #fbfbfc;
+    border: 1.5px solid var(--line);
+    border-radius: 13px;
+    outline: none;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+
+  input[type="date"]:hover { border-color: #d7d8e0; }
+
+  input[type="date"]:focus {
+    background: #fff;
+    border-color: var(--hw-red);
+    box-shadow: 0 0 0 4px rgba(199, 0, 11, 0.10);
+  }
+
+  button {
+    align-self: flex-end;
+    height: 54px;
+    padding: 0 30px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: var(--hw-red);
+    border: none;
+    border-radius: 13px;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .18s ease, background .18s ease;
+    box-shadow: 0 10px 22px -10px rgba(199, 0, 11, 0.75);
+  }
+
+  button:hover { background: #a80009; }
+
+  button:active { transform: translateY(1px); }
+
+  .hint {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: #9a9eac;
+    min-height: 20px;
+  }
+
+  .hint.error { color: var(--hw-red); }
+
+  .result {
+    margin-top: 30px;
+    padding-top: 28px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .result[hidden] { display: none; }
+
+  .lead {
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+  }
+
+  .big {
+    margin: 6px 0 2px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    color: var(--hw-red);
+  }
+
+  .big .num {
+    font-size: 76px;
+    line-height: 1.02;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .big .unit {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .range {
+    margin: 8px 0 24px;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .stat {
+    background: #fbfbfc;
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    padding: 16px 18px;
+  }
+
+  .stat .k {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+  }
+
+  .stat .v {
+    margin-top: 7px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat .v small {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-left: 2px;
+  }
+
+  .bar {
+    margin-top: 22px;
+    height: 8px;
+    border-radius: 999px;
+    background: #eef0f3;
+    overflow: hidden;
+  }
+
+  .bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #e4000c, var(--hw-red));
+    transition: width .9s cubic-bezier(.22, .9, .3, 1);
+  }
+
+  .bar-note {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  footer {
+    margin-top: 30px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    line-height: 1.7;
+    color: #a2a6b3;
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 20px 14px; }
+    .card { padding: 30px 22px 26px; border-radius: 20px; }
+    h1 { font-size: 25px; }
+    .form { flex-direction: column; }
+    button { width: 100%; }
+    .big .num { font-size: 58px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge">HUAWEI · 工作天数计算器</span>
+
+    <h1>我在华为的<span class="accent">第几天</span></h1>
+    <p class="sub">输入你加入华为的日期，立刻算出到今天为止一共工作了多少天。</p>
+
+    <form class="form" id="form">
+      <div class="field">
+        <label for="joinDate">入职日期</label>
+        <input type="date" id="joinDate" required />
+      </div>
+      <button type="submit">开始计算</button>
+    </form>
+    <p class="hint" id="hint">支持任意历史日期，精确到天。</p>
+
+    <section class="result" id="result" hidden aria-live="polite">
+      <div class="lead">截至今天，你已在华为工作</div>
+      <div class="big">
+        <span class="num" id="totalDays">0</span>
+        <span class="unit">天</span>
+      </div>
+      <p class="range" id="range"></p>
+
+      <div class="grid">
+        <div class="stat">
+          <div class="k">折合时长</div>
+          <div class="v" id="duration"></div>
+        </div>
+        <div class="stat">
+          <div class="k">已度过入职周年</div>
+          <div class="v" id="anniversaries"></div>
+        </div>
+        <div class="stat">
+          <div class="k">距离下个周年</div>
+          <div class="v" id="nextAnniv"></div>
+        </div>
+      </div>
+
+      <div class="bar"><span id="barFill"></span></div>
+      <p class="bar-note" id="barNote"></p>
+    </section>
+
+    <footer>
+      统计口径：从入职当天起算至今天（含首尾两天），按自然日计，不扣除周末与节假日。<br />
+      退休流程？先把天数算清楚 —— 今天也要好好吃饭。
+    </footer>
+  </main>
+
+<script>
+  const MS_PER_DAY = 86400000;
+  const form = document.getElementById('form');
+  const input = document.getElementById('joinDate');
+  const hint = document.getElementById('hint');
+  const result = document.getElementById('result');
+
+  const pad = n => String(n).padStart(2, '0');
+  const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const today = startOfDay(new Date());
+  input.max = toISO(today);
+
+  function calendarDiff(from, to) {
+    let y = to.getFullYear() - from.getFullYear();
+    let m = to.getMonth() - from.getMonth();
+    let d = to.getDate() - from.getDate();
+    if (d < 0) {
+      m -= 1;
+      d += new Date(to.getFullYear(), to.getMonth(), 0).getDate();
+    }
+    if (m < 0) { y -= 1; m += 12; }
+    return { y, m, d };
+  }
+
+  function nextAnniversary(join, now) {
+    let year = now.getFullYear();
+    let target = new Date(year, join.getMonth(), join.getDate());
+    // 2 月 29 日入职的，非闰年按 3 月 1 日算
+    if (target.getMonth() !== join.getMonth()) target = new Date(year, join.getMonth() + 1, 1);
+    if (target < now) {
+      year += 1;
+      target = new Date(year, join.getMonth(), join.getDate());
+      if (target.getMonth() !== join.getMonth()) target = new Date(year, join.getMonth() + 1, 1);
+    }
+    return target;
+  }
+
+  function setHint(text, isError) {
+    hint.textContent = text;
+    hint.classList.toggle('error', !!isError);
+  }
+
+  let animFrame = null;
+  function countUp(el, target) {
+    cancelAnimationFrame(animFrame);
+    const start = performance.now();
+    const duration = 850;
+    const step = now => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased).toLocaleString('zh-CN');
+      if (p < 1) animFrame = requestAnimationFrame(step);
+    };
+    animFrame = requestAnimationFrame(step);
+  }
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    if (!input.value) {
+      setHint('请先选择你的入职日期。', true);
+      return;
+    }
+
+    const parts = input.value.split('-').map(Number);
+    const join = new Date(parts[0], parts[1] - 1, parts[2]);
+    if (isNaN(join.getTime()) || join.getMonth() !== parts[1] - 1 || join.getDate() !== parts[2]) {
+      setHint('这个日期不存在，请重新选择。', true);
+      return;
+    }
+    if (join > today) {
+      setHint('入职日期不能晚于今天，你还没来呢。', true);
+      return;
+    }
+
+    const days = Math.round((today - join) / MS_PER_DAY) + 1;
+    const { y, m, d } = calendarDiff(join, today);
+    const next = nextAnniversary(join, today);
+    const untilNext = Math.round((next - today) / MS_PER_DAY);
+    const yearsPassed = y;
+
+    document.getElementById('totalDays').dataset.value = days;
+    countUp(document.getElementById('totalDays'), days);
+
+    document.getElementById('range').textContent =
+      `${toISO(join)} 入职  →  ${toISO(today)} 今天`;
+
+    document.getElementById('duration').innerHTML =
+      `${y}<small>年</small> ${m}<small>个月</small> ${d}<small>天</small>`;
+
+    document.getElementById('anniversaries').innerHTML =
+      `${yearsPassed}<small>次</small>`;
+
+    document.getElementById('nextAnniv').innerHTML = untilNext === 0
+      ? `就是今天<small>🎉</small>`
+      : `${untilNext}<small>天</small>`;
+
+    const barNote = document.getElementById('barNote');
+    if (untilNext === 0) {
+      barNote.textContent = `今天是你的第 ${yearsPassed} 个入职周年，恭喜！`;
+      document.getElementById('barFill').style.width = '100%';
+    } else {
+      const cycleStart = new Date(next.getFullYear() - 1, join.getMonth(), join.getDate());
+      if (cycleStart.getMonth() !== join.getMonth()) {
+        cycleStart.setFullYear(cycleStart.getFullYear());
+      }
+      const totalCycle = Math.round((next - cycleStart) / MS_PER_DAY);
+      const passed = Math.round((today - cycleStart) / MS_PER_DAY);
+      const pct = Math.max(0, Math.min(100, (passed / totalCycle) * 100));
+      requestAnimationFrame(() => {
+        document.getElementById('barFill').style.width = pct.toFixed(2) + '%';
+      });
+      barNote.textContent = `距离下一个入职周年（${toISO(next)}）还有 ${untilNext} 天。`;
+    }
+
+    result.hidden = false;
+    setHint('计算完成，数据截至今天。');
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  input.addEventListener('input', () => {
+    if (hint.classList.contains('error')) setHint('支持任意历史日期，精确到天。');
+  });
+</script>
+</body>
+</html>
